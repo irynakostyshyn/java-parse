@@ -38,8 +38,7 @@ public class Parser{
             Document docs = Jsoup.connect(htmlDoc).get();
             Elements tiles = docs.select("div.g-i-tile-i-title");
             for (Element tile :tiles){
-                Elements link = tile.select("a[href]");
-                parseReviews(link+"comments/");
+                parseReviews(tile.select("a").attr("href")+"comments/");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -49,11 +48,15 @@ public class Parser{
 
     private void parseReviews(String urls) throws IOException {
         String htmlDoc = urls;
+
         Document doc = Jsoup.connect(htmlDoc).get();
-
+        //System.out.println(doc.select("a.paginator-catalog-l-link").size());
         Element nums = doc.select("a.paginator-catalog-l-link").last();
+        int num = 0;
+        if(doc.select("a.paginator-catalog-l-link").size() != 0){
+            num = Integer.parseInt(nums.ownText());
+        }
 
-        int num = Integer.parseInt(nums.ownText());
 
         Object[] sentiments = new Object[num +1];
         int k = 0;
@@ -86,7 +89,7 @@ public class Parser{
             if(star.hasText()){
                 Elements texts = text.select("div.pp-review-text-i");
                 String tmp[] = new String[2] ;
-                tmp[0]="";
+                tmp[0]=star.attr("content");
                 tmp[1]=texts.first().ownText().replaceAll(" ", "");
                 sentiments[k] = tmp ;
             }

@@ -8,32 +8,38 @@ import java.io.IOException;
 public class Parser{
     public String url;
     public Parser(String urlp){
-        String url = urlp;
+        url = urlp;
     }
 
-    public  void parseCategory() throws IOException {
-        String urlp = url;
-        Document doc = Jsoup.connect(urlp).get();
+    public  void parseCategory() {
 
-        Elements nums = doc.select("a.paginator-catalog-l-link");
-        int nums1 = Integer.getInteger(String.valueOf(nums.get(-1)));
-        for (int i = nums1; i > 0; i--) {
-            String pg = urlp + String.format("page=%s/", i);
-            System.out.println(pg);
-            parseCategoryPage(pg);
+
+        try {
+            Document doc = Jsoup.connect(url).get();
+
+            Element nums = doc.select("a.paginator-catalog-l-link").last();
+            int nums1 = Integer.parseInt(nums.ownText());
+            for (int i = nums1; i > 0; i--) {
+                String pg = url + String.format("page=%s/", i);
+                System.out.println(pg);
+                parseCategoryPage(pg);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
+
+
     }
 
-    private void parseCategoryPage(String url){
-        String htmlDoc = url;
+    private void parseCategoryPage(String urls){
+        String htmlDoc = urls;
         try {
             Document docs = Jsoup.connect(htmlDoc).get();
             Elements tiles = docs.select("div.g-i-tile-i-title");
             for (Element tile :tiles){
                 Elements link = tile.select("a[href]");
                 parseReviews(link+"comments/");
-
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -41,20 +47,53 @@ public class Parser{
 
     }
 
-    private void parseReviews(String url) throws IOException {
-        String htmlDoc = url;
+    private void parseReviews(String urls) throws IOException {
+        String htmlDoc = urls;
         Document doc = Jsoup.connect(htmlDoc).get();
 
-        Elements nums = doc.select("a.paginator-catalog-l-link");
+        Element nums = doc.select("a.paginator-catalog-l-link").last();
+
+        int num = Integer.parseInt(nums.ownText());
+
+        Object[] sentiments = new Object[num +1];
+        int k = 0;
+        for(int i=1; i<=num; i++){
+            String pg = url + String.format("page=%s/", i);
+            sentiments[k]= parseReviewsPage(pg);
+            k+= 1;
+
+
+        }
+        String[] parts =url.split("/");
+        String filename = "data/" +  parts[4] + ".csv";
+
+
 
     }
 
-    public void parseReviewsPage(String url) throws IOException {
+    public Object[] parseReviewsPage(String url) throws IOException {
         String htmlDoc = url;
         Document doc = Jsoup.connect(htmlDoc).get();
 
-        Elements nums = doc.select("article.pp-review-i");
+        Elements reviews = doc.select("article.pp-review-i");
+        System.out.println(reviews);
+        Object[] reviews1 = reviews.toArray();
+        Object[] sentiments = new Object[reviews1.length];
+        int k = 0;
+        for (Element review :reviews){
+            Element star = review.select("span.g-rating-stars-i").first();
+            Element text = review.select("dev.pp-review-text").first();
+            if(star.hasText()){
+                Elements texts = text.select("div.pp-review-text-i");
+                String tmp[] = new String[2] ;
+                tmp[0]="";
+                tmp[1]=texts.first().ownText().replaceAll(" ", "");
+                sentiments[k] = tmp ;
+            }
 
+        }
+
+        return sentiments;
     }
 
 }

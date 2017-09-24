@@ -2,8 +2,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import com.opencsv.CSVWriter;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Parser{
     public String url;
@@ -69,6 +72,15 @@ public class Parser{
         }
         String[] parts =url.split("/");
         String filename = "data/" +  parts[4] + ".csv";
+        CSVWriter writercsv = new CSVWriter(new FileWriter(filename), ',');
+
+        //for (Object[] sentiment : sentiments) {
+           // writercsv.writeNext(sentiment);
+        //}
+
+        writercsv.close();
+
+        System.out.println(sentiments.length + " reviews from " + url );
 
 
 
@@ -80,8 +92,8 @@ public class Parser{
 
         Elements reviews = doc.select("article.pp-review-i");
         System.out.println(reviews);
-        Object[] reviews1 = reviews.toArray();
-        Object[] sentiments = new Object[reviews1.length];
+
+        Object[] sentiments = new Object[reviews.size()];
         int k = 0;
         for (Element review :reviews){
             Element star = review.select("span.g-rating-stars-i").first();
@@ -92,6 +104,7 @@ public class Parser{
                 tmp[0]=star.attr("content");
                 tmp[1]=texts.first().ownText().replaceAll(" ", "");
                 sentiments[k] = tmp ;
+                k+=1;
             }
 
         }

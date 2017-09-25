@@ -6,7 +6,8 @@ import com.opencsv.CSVWriter;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+
+import java.util.ArrayList;
 
 public class Parser{
     public String url;
@@ -18,13 +19,13 @@ public class Parser{
 
 
         try {
-            Document doc = Jsoup.connect(url).get();
+            Document doc = connectionJsoup(url);
 
             Element nums = doc.select("a.paginator-catalog-l-link").last();
             int nums1 = Integer.parseInt(nums.ownText());
             for (int i = nums1; i > 0; i--) {
                 String pg = url + String.format("page=%s/", i);
-                System.out.println(pg);
+                //System.out.println(pg);
                 parseCategoryPage(pg);
             }
         } catch (IOException e) {
@@ -36,10 +37,10 @@ public class Parser{
     }
 
     private void parseCategoryPage(String urls){
-        String htmlDoc = urls;
+
         try {
-            Document docs = Jsoup.connect(htmlDoc).get();
-            Elements tiles = docs.select("div.g-i-tile-i-title");
+            Document doc = connectionJsoup(urls);
+            Elements tiles = doc.select("div.g-i-tile-i-title");
             for (Element tile :tiles){
                 parseReviews(tile.select("a").attr("href")+"comments/");
             }
@@ -50,66 +51,73 @@ public class Parser{
     }
 
     private void parseReviews(String urls) throws IOException {
-        String htmlDoc = urls;
-
-        Document doc = Jsoup.connect(htmlDoc).get();
+        Document doc = connectionJsoup(urls);
+        //System.out.println(urls);
         //System.out.println(doc.select("a.paginator-catalog-l-link").size());
         Element nums = doc.select("a.paginator-catalog-l-link").last();
         int num = 0;
+        //System.out.println(doc.select("a.paginator-catalog-l-link").size());
         if(doc.select("a.paginator-catalog-l-link").size() != 0){
             num = Integer.parseInt(nums.ownText());
         }
 
 
-        Object[] sentiments = new Object[num +1];
-        int k = 0;
+        ArrayList<String[]> sentiments = new ArrayList<String[]>();
+        //System.out.println(num);
+        if(num==0){
+            sentiments.addAll(parseReviewsPage(urls));
+        }
         for(int i=1; i<=num; i++){
-            String pg = url + String.format("page=%s/", i);
-            sentiments[k]= parseReviewsPage(pg);
-            k+= 1;
-
+            String pg = urls + String.format("page=%s/", i);
+            sentiments.addAll(parseReviewsPage(pg));
 
         }
-        String[] parts =url.split("/");
-        String filename = "data/" +  parts[4] + ".csv";
-        CSVWriter writercsv = new CSVWriter(new FileWriter(filename), ',');
+        if (sentiments.size()!=0) {
+            String[] parts = urls.split("/");
+            String filename = "data/" + parts[4] + ".csv";
+            CSVWriter writercsv = new CSVWriter(new FileWriter(filename), ',');
 
-        //for (Object[] sentiment : sentiments) {
-           // writercsv.writeNext(sentiment);
-        //}
+            for (String[] sentiment : sentiments) {
+                // System.out.println(sentiment);
+                writercsv.writeNext(sentiment);
+            }
 
-        writercsv.close();
+            writercsv.close();
+        }
 
-        System.out.println(sentiments.length + " reviews from " + url );
+       System.out.println(sentiments.size() + " reviews from " + urls );
 
 
 
     }
 
-    public Object[] parseReviewsPage(String url) throws IOException {
-        String htmlDoc = url;
-        Document doc = Jsoup.connect(htmlDoc).get();
+    public ArrayList<String[]> parseReviewsPage(String urls) throws IOException {
+
+        Document doc = connectionJsoup(urls);
 
         Elements reviews = doc.select("article.pp-review-i");
-        System.out.println(reviews);
+        // System.out.println(reviews.size());
 
-        Object[] sentiments = new Object[reviews.size()];
-        int k = 0;
+        ArrayList<String[]> sentiments = new ArrayList<String[]>();
+
         for (Element review :reviews){
-            Element star = review.select("span.g-rating-stars-i").first();
-            Element text = review.select("dev.pp-review-text").first();
-            if(star.hasText()){
+            Elements star = review.select("span.g-rating-stars-i");
+            Element text = review.select("div.pp-review-text").first();
+
+            if(star.size()!=0){
                 Elements texts = text.select("div.pp-review-text-i");
-                String tmp[] = new String[2] ;
-                tmp[0]=star.attr("content");
-                tmp[1]=texts.first().ownText().replaceAll(" ", "");
-                sentiments[k] = tmp ;
-                k+=1;
+                sentiments.add(new String[]{star.first().attr("content"), texts.first().html().replaceAll(" ", "")});
+
             }
 
         }
 
         return sentiments;
+    }
+
+    private Document connectionJsoup(String urls) throws IOException {
+
+        return Jsoup.connect(urls).get();
     }
 
 }

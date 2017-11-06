@@ -9,7 +9,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 
-public class Parser{
+public class Parser extends ParsP{
     public String url;
     public Parser(String urlp){
         url = urlp;
@@ -19,7 +19,9 @@ public class Parser{
 
 
         try {
-            Document doc = connectionJsoup(url);
+            ConnectionJsoup jsoup = new ConnectionJsoup(url);
+
+            Document doc = jsoup.connectionJsoup();
 
             Element nums = doc.select("a.paginator-catalog-l-link").last();
             int nums1 = Integer.parseInt(nums.ownText());
@@ -39,7 +41,9 @@ public class Parser{
     private void parseCategoryPage(String urls){
 
         try {
-            Document doc = connectionJsoup(urls);
+            ConnectionJsoup jsoup = new ConnectionJsoup(urls);
+
+            Document doc = jsoup.connectionJsoup();
             Elements tiles = doc.select("div.g-i-tile-i-title");
             for (Element tile :tiles){
                 parseReviews(tile.select("a").attr("href")+"comments/");
@@ -51,7 +55,10 @@ public class Parser{
     }
 
     private void parseReviews(String urls) throws IOException {
-        Document doc = connectionJsoup(urls);
+        ConnectionJsoup jsoup = new ConnectionJsoup(urls);
+
+        Document doc = jsoup.connectionJsoup();
+
         //System.out.println(urls);
         //System.out.println(doc.select("a.paginator-catalog-l-link").size());
         Element nums = doc.select("a.paginator-catalog-l-link").last();
@@ -93,7 +100,9 @@ public class Parser{
 
     public ArrayList<String[]> parseReviewsPage(String urls) throws IOException {
 
-        Document doc = connectionJsoup(urls);
+        ConnectionJsoup jsoup = new ConnectionJsoup(urls);
+
+        Document doc = jsoup.connectionJsoup();
 
         Elements reviews = doc.select("article.pp-review-i");
         // System.out.println(reviews.size());
@@ -115,9 +124,6 @@ public class Parser{
         return sentiments;
     }
 
-    private Document connectionJsoup(String urls) throws IOException {
 
-        return Jsoup.connect(urls).get();
-    }
 
 }

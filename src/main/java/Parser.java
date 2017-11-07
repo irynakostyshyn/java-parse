@@ -5,7 +5,7 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 
 public class Parser extends ParsP{
-    protected String url;
+
     public Parser(String urlp){
         this.url = urlp;
     }

@@ -1,4 +1,3 @@
-
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -19,13 +18,14 @@ public class Parser extends ParsP{
             Document doc = jsoup.connectionJsoup();
 
             Element nums = doc.select("a.paginator-catalog-l-link").last();
+
             int nums1 = Integer.parseInt(nums.ownText());
             for (int i = nums1; i > 0; i--) {
                 String pg = url + String.format("page=%s/", i);
                 //System.out.println(pg);
                 parseCategoryPage(pg);
             }
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
 
